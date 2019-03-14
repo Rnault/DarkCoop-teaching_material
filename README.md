@@ -9,7 +9,7 @@ This repository contains all the material used in the presentation of the projec
 - The data collected in the beginning of the class
 - R Scripts to clean, explore and visualize the data
 
-### Slidy
+### slidy
 This folder contains the slides presenting the conceptual framework of the project.
 
 ### simulation
@@ -22,5 +22,5 @@ This folder contains a python implementation of the "Rely or Verify game" to be 
 ### data
 This folder contains the data we collected with the students when playing the oTree version of the game
 
-### Exploring
+### exploring
 This folder contains the scripts to work with the data from oTree one one side and from the simulation in the other.
