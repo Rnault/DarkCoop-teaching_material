@@ -7,7 +7,7 @@ This repository contains all the material used in the presentation of the projec
 - The scripts for the R implementation of the "Rely of Verify" game, and the Agent Based Simulation
 - The oTree implementation of the "Rely or Verify" game
 - The data collected in the beginning of the class
-- Scripts to clean, explore and visualize the data
+- R Scripts to clean, explore and visualize the data
 
 ### Slidy
 This folder contains the slides presenting the conceptual framework of the project.
