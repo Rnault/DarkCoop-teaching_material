@@ -1,5 +1,5 @@
 # The dark Side of Cooperation
-## Teamwork Ethical Decision Making
+## Teamwork and Ethical Decision Making
 
 ## Purpose of this repository
 This repository contains all the material used in the presentation of the project to the Cognitive Science students of Aarhus University. Through it, you'll have access to:
