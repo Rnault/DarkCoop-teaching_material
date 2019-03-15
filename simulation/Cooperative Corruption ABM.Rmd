@@ -15,6 +15,10 @@ ABM model of a game simulating interaction between leader and team in a situatio
 Although this version is not computationally optimal, its sequential organisation makes it easy to
 grasp each step of the process the players go through while playing the game. This makes it a good pedagogical tool, hopefully. :)
 
+
+
+########################  I.CODING  ############################
+
 The function takes 5 inputs:
   -n_game: the number of games to run (default: 1)
   -tmax: the number of rounds a game should be (default: 40)
@@ -273,6 +277,8 @@ N_Cumulative_Mean_ttest <- function(N){
 ```
 
 
+########################  II.RUNING THE GAME  ############################
+
 *** PROTOTYPICAL SCENARIOS ***
 Here, we define a set of prototypical scenarios using only the simple BiasedChoice strategy. Those should be highly predictible, defining them allows us to set baselines to understand the behavioural range of the game. We can then compare them and build better expectation.
 ```{r}
@@ -297,6 +303,19 @@ The_Conformist <- CoopCor(10, 1000, BiasedChoice(0), BiasedChoice(1), BiasedChoi
 
 #Self Concept Maintenance Theory, a little bit of cheating doesn't hurt anybody... does it?
 SCM <- CoopCor(10, 1000, BiasedChoice(0.1), BiasedChoice(0.1), BiasedChoice(0.1))
+
+#2 of the smart leaders for early check
+TheoreticalLeader <- CoopCor(1000, 100, BiasedChoice(0.2), BiasedChoice(0.2), N_Th_Cumulative_Mean(25))
+BiasedLeader <- CoopCor(1000,100,BiasedChoice(0.2),BiasedChoice(0.2),N_Cumulative_Mean(25))
+```
+
+# Save simulations for later use /!\ DON'T DO IT, WE GOT IT COVERED
+```{r}
+scenarios <- list("Peaceful_Baseline" = Peaceful_Baseline, "Wall_Street" = Wall_Street, "USSR" = USSR, "Big_Brother" = Big_Brother, "The_Greedy" = The_Greedy, "The_Conformist" = The_Conformist, "SCM" = SCM, "TheoreticalLeader" = TheoreticalLeader, "BiasedLeader" = BiasedLeader)
+
+for(i in seq_along(scenarios)){
+  write.csv(scenarios[[i]], paste0(paste0("data/sims/sim_plots/", names(scenarios)[i]), ".csv"), row.names = FALSE)
+}
 ```
 
 
@@ -339,7 +358,7 @@ for(i in seq_along(biases)){
 }
 
 
-####### FROM HERE, SOME FORMATTING MAGIC USING MOSTLY TIDYVERSE
+####### FROM HERE, SOME FORMATTING MAGIC TO GET A READABLE FORMAT OF THE DATA ########
 names(simulations_f) <- biases
 names(simulations_g) <- biases
 names(simulations_f_tt) <- biases
@@ -361,6 +380,13 @@ simulations_ftt_df <- plyr:: ldply(simulations_f_tt, data.frame) %>%
   mutate(bias = as.numeric(as.character(.id)),
          heuristic = "forgiving_ttest")
 
+```
+
+# Save simulations for later use
+```{r}
+### We want to keep 2 different dataframes
+
+#1. The data frames with everything, allwoing to keep track of what happens in time
 sim_comb <- rbind(simulations_g_df,simulations_f_df,simulations_gtt_df,simulations_ftt_df) %>%
   group_by(heuristic, n_game, bias) %>%
   mutate(turnID = row_number(),
@@ -371,7 +397,7 @@ sim_comb <- rbind(simulations_g_df,simulations_f_df,simulations_gtt_df,simulatio
 
 #write.csv(sim_comb, "data/sims/sim_plots/leader_heuristic/sim_comb.csv", row.names = FALSE)
 
-
+#2. A dataframe with summary measures to evaluate overall outcome
 sim_comb_sum <- sim_comb %>%
   group_by(heuristic, bias, turnID) %>%
   summarise(mean_pay = mean(payoff),
