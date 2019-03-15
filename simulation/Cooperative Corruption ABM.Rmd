@@ -298,8 +298,11 @@ Big_Brother <- CoopCor(10, 1000, BiasedChoice(0), BiasedChoice(0), BiasedChoice(
 #the total amount that can be gained this round. By playing second, P2's role is to match this
 #amount to make it a payoff.
 #Therefore, we can have 2 more scenarios
-The_Greedy <- CoopCor(10, 1000, BiasedChoice(1), BiasedChoice(0), BiasedChoice(0.5)) #overall, always get 6, but only sometimes (when P2 rolls 6 too)
-The_Conformist <- CoopCor(10, 1000, BiasedChoice(0), BiasedChoice(1), BiasedChoice(0.5)) #overall, always get what P1 rolls, higher risk of loosing the game as there is a (cheated) payoff every turn
+The_Greedy <- CoopCor(10, 1000, BiasedChoice(1), BiasedChoice(0), BiasedChoice(0.5)) #overall,
+#always get 6, but only sometimes (when P2 rolls 6 too)
+The_Conformist <- CoopCor(10, 1000, BiasedChoice(0), BiasedChoice(1), BiasedChoice(0.5)) #overall,
+#always get what P1 rolls, higher risk of loosing the game as there is a (cheated) payoff every
+#turn
 
 #Self Concept Maintenance Theory, a little bit of cheating doesn't hurt anybody... does it?
 SCM <- CoopCor(10, 1000, BiasedChoice(0.1), BiasedChoice(0.1), BiasedChoice(0.1))

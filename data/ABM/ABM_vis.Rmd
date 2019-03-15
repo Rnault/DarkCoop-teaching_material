@@ -189,7 +189,8 @@ game_summaries %>%
 
 # Read in the datasets
 ```{r}
-sim_comb_sum <- read_csv("data/sims/leader_heuristic/sim_comb_sum.csv")
+sim_comb_sum <- read.csv("data/sims/leader_heuristic/sim_comb_sum.csv")
+sim_comb <- read.csv("data/sims/leader_heuristic/sim_comb.csv")
 ```
 
 About money?
@@ -203,6 +204,31 @@ sim_comb_sum %>%
   geom_line(aes(group = bias)) +
   scale_color_gradient2(low = "green", mid = "yellow", high = "red", midpoint = 0.5) +
   facet_wrap(~heuristic)
+```
+
+What is the state of the games at last round?
+```{r}
+rounds=100
+#Creating a dataframe with data only from last round
+sim_comb_max <- sim_comb_sum %>%
+  filter(turnID == rounds)
+
+
+sim_comb_max %>% ggplot(aes(x = bias, y = mean_cum_actual_pay, fill = heuristic)) +
+  geom_bar(stat = "identity", position = "dodge")
+
+## At last round
+
+## What we have when the game ends
+#gains for each cheating bias and heuristic, averaged over the 250 games
+sim_comb_max %>% ggplot(aes(x = bias, y = mean_cum_pay, color = heuristic)) +
+  geom_point() + geom_smooth(method = 'lm')
+#actual gains (accounting for failed games) for each cheating bias and heuristic, averaged over the 250 games
+sim_comb_max %>% ggplot(aes(x = bias, y = mean_cum_actual_pay, color = heuristic)) +
+  geom_point() + geom_smooth()
+#total lost games on 250 runs by bias and heuristics
+sim_comb_max %>% ggplot(aes(x = bias, y = sum_lost_game, color = heuristic)) +
+  geom_point() + geom_smooth()
 ```
 
 Everything about the dynamics between checks and cheats:
