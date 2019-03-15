@@ -57,7 +57,7 @@ CoopCor_simple <- function(n_game, tmax, BiasP1, BiasP2, BiasP3, lose.game.chanc
 # Evolution
 To evolve, we have to define 3 things:
 -our environment -> Here, environment is the pool of 'companies'. Each company is a team of 3 that plays the game every timestep. After a run, they are ordered by their results.
--our time steps
+-our time steps -> Each time step, all companies play the game, get ordered, the one that lost get updated
 -our updating strategy: in the following block
 Then wrap this all up in one function
 ```{r}
@@ -72,7 +72,7 @@ Companies <- function(N, peace = 0){
   return(companies)
 }
 
-#This function runs multipe games (using the Sep function) at the same time for different companies
+#This function runs multipe games at the same time for different companies (using the Sep function)
 RunGen <- function(companies){
   companyList <- as.list(as_tibble(t(companies)))
   results <- as_tibble(t(as_tibble(mclapply(companyList, Sep, mc.cores = 4))))
@@ -149,7 +149,7 @@ For that, we define 3 different ways to fire employees, thus 3 ways for the syte
 2.We can investigate, find out who cheated, and fire that person. After all, his colleagues might not be aware of his misconduct.
 3.We sack everyone. We don't have time to lose, the team failed, the team is responsible
 
-When people get fired, they are being replaced by employees with similar profiles to the employees belonging to the 10% best companies.We introduce randomness by
+When people get fired, they are being replaced by employees with similar profiles to the employees belonging to the 10% best companies. We introduce randomness by generating a new bias based on a normal distribution new employee ~ norm(mean = one of the best employees, sd= 0.1)
 
 ```{r}
 #Only the leader get sacked
