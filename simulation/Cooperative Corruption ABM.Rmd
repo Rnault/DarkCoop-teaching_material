@@ -7,13 +7,13 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 library(purrr)
 ```
-                                        #/!\ TO OPTIMISE /!\ 
+                                        #/!\ NOT OPTIMISED /!\ 
 
 Cooperative Corruption
-ABM model of game to simulate interaction between leader and team in a situation where cheating is possible (and incentivized): the Rely or Verify game
+ABM model of a game simulating interaction between leader and team in a situation where cheating is possible (and incentivized): the Rely or Verify game
 
 Although this version is not computationally optimal, its sequential organisation makes it easy to
-grasp each step of the process Players go through when playing the game.
+grasp each step of the process the players go through while playing the game. This makes it a good pedagogical tool, hopefully. :)
 
 The function takes 5 inputs:
   -n_game: the number of games to run (default: 1)
@@ -23,6 +23,8 @@ The function takes 5 inputs:
   -leader: a STRATEGY function to decide to check or not
   As before, the function has to return ether 1 (to signal checking) or 0 (to signal no checking)
   -p_lose: the probability to lose the game upon non verifyed cheating (expressed between 0 and 1, 0.05 being 5% chance of losing) (default: 0.05)
+  
+*** THE GAME ***
 ```{r}
 CoopCor <- function(n_game=1,tmax=40,agent1,agent2,leader,p_lose=0.05){
   
@@ -96,13 +98,13 @@ CoopCor <- function(n_game=1,tmax=40,agent1,agent2,leader,p_lose=0.05){
 }
 
 #Equation to calculate payoff
-#It takes in the dice roll value, wether there was a check or not, wether someone cheated or not, and wether the team is still in game or not
+#It takes in the dice roll value (1 to 6), wether there was a check or not (0 or 1), wether someone cheated or not (0 or 1), and wether the team is still in game or not (0 or 1)
 PayoffEq <- function(dice,check,cheat,ingame){
 (dice - check*dice/2 - check*cheat*dice/2)*ingame}
 ```
 
 
-STRATEGIES
+*** STRATEGIES ***
 Functions that we can use inside of the CoopCor game. 
 ```{r}
 #The simplest strategy possible. The function
@@ -120,10 +122,42 @@ BiasedChoice <- function(rate){
 }
 
 ############## LEADER STRATEGIES ##################
+
 #This is a set of strategies to use with the leader
-#It makes the leader smarter
+#It makes the leader smarter by relying on information from previous dice rolls to take a #decision. The purpose is to simulate an ideal ethical leader and evaluate its impact on the
+#team's performance.
+#   -The leader is an expert in the field.
+#He knows the difficulty of the task (in our case, there is 6/36 chance to roll the same number,
+#thus 1/6 chance to have a payoff). Thus, he knows the expected mean pay off (per round) when
+#there is absolutely no cheating: 3.5*1/6 = 0.583333
+#By choosing a window size, the leader can calculate the actual mean payoff in that window. If it
+#is bigger than the expected mean payoff, he becomes suspicious of his team's efficacy and checks.
+#Otherwise, he can lay back and estimate that his team is doing a great job.
+#There is 2*2 variants of the strategy, varying along 2 different axis
+
+#1. The leader can be "theoretical" or "biased".
+#To understand the difference, we have to understand that when a team is caught cheating, the
+#payoff for this round is zero.
+#   *A theoretical leader remembers the claims of its employees and how they tried to screw him.
+#If you cheated but got caught in the act, he'll remember the payoff you should have obtained, and
+#calculate the mean payoff according to that "claimed" theoretical payoff you should have gotten
+#if cheating wasn't discovered.
+#   *A biased leader is relaxed and trustfull. When he catches his employees cheating, he'll stop #them for the time being but decide to move on right after. This leads him to suffer from
+#chronical amnesia, everytime he calculates the mean payoff for the selected window size, an
+#instance of caught cheating (with payoff 0) is similar to an instance of no success (pay off 0
+#too).
+#2. The leader can be strict or statistician
+#   *A strict leader doesn't think twice, if the observed mean pay off crosses the line of the #true mean pay off, he'll act.
+#   *A statistician leader knows a bit about probability theory and statistics. He knows that it
+#is very rare to observe the true mean of a population with a given sample, sometimes you might
+#just have a lucky strike. Thus he knows about variance and its relationship to the number of
+#observations (here, window size). With the power of his calculator, he uses a t-test to decide if
+#the observed value of the mean stands in a reasonable range from the true mean given the records
+#he has access to.
 
 
+
+###### STRICT BIASED LEADER #####
 #Has a memory of N + 1, looking at the mean payoff in a N + 1 window, compare with expectected mean payoff, if higher, check
 N_Cumulative_Mean <- function(N){
   
@@ -150,6 +184,7 @@ N_Cumulative_Mean <- function(N){
   return(strategy)
 }
 
+###### STRICT THEORETICAL LEADER #####
 N_Th_Cumulative_Mean <- function(N){
   
   # closure
@@ -175,6 +210,7 @@ N_Th_Cumulative_Mean <- function(N){
   return(strategy)
 }
 
+###### STATISTICIAN THEORETICAL LEADER #####
 N_Th_Cumulative_Mean_ttest <- function(N){
   
   # closure
@@ -205,6 +241,7 @@ N_Th_Cumulative_Mean_ttest <- function(N){
   return(strategy)
 }
 
+###### STATISTICIAN BIASED LEADER ##### 
 N_Cumulative_Mean_ttest <- function(N){
   
   # closure
@@ -236,13 +273,13 @@ N_Cumulative_Mean_ttest <- function(N){
 ```
 
 
-
-Some example of runs
+*** PROTOTYPICAL SCENARIOS ***
+Here, we define a set of prototypical scenarios using only the simple BiasedChoice strategy. Those should be highly predictible, defining them allows us to set baselines to understand the behavioural range of the game. We can then compare them and build better expectation.
 ```{r}
-#No one cheats, no one checks, this is a trustworthy workplace
+#No one cheats, no one checks, this is the perfect trustworthy workplace
 Peaceful_Baseline <- CoopCor(10, 1000, BiasedChoice(0), BiasedChoice(0), BiasedChoice(0))
 
-#Everyone cheats, no one here to regulate, this is speculative chaos
+#Everyone cheats, no one is here to regulate, this is speculative chaos
 Wall_Street <- CoopCor(10, 1000, BiasedChoice(1), BiasedChoice(1), BiasedChoice(0))
 
 #Everyone tries to get away with it, but there is always someone to watch
@@ -251,15 +288,104 @@ USSR <- CoopCor(10, 1000, BiasedChoice(1), BiasedChoice(1), BiasedChoice(1))
 #Even though you've always followed orders, you'll never be trusted
 Big_Brother <- CoopCor(10, 1000, BiasedChoice(0), BiasedChoice(0), BiasedChoice(1))
 
-#Behavioural differences of having 2 qualitative ways of cheating (P1 increase != P2 match)
-The_Greedy <- CoopCor(10, 1000, BiasedChoice(1), BiasedChoice(0), BiasedChoice(0.5)) #overall, always get 6 sometimes (when P2 rolls 6 too)
+#Although the task is very similar, players have different roles. By playing first, P1's roll sets
+#the total amount that can be gained this round. By playing second, P2's role is to match this
+#amount to make it a payoff.
+#Therefore, we can have 2 more scenarios
+The_Greedy <- CoopCor(10, 1000, BiasedChoice(1), BiasedChoice(0), BiasedChoice(0.5)) #overall, always get 6, sometimes (when P2 rolls 6 too)
 The_Conformist <- CoopCor(10, 1000, BiasedChoice(0), BiasedChoice(1), BiasedChoice(0.5)) #overall, always get what P1 rolls, higher risk of loosing the game as there is a (cheated) payoff every turn
 
-SCM <- CoopCor(10, 1000, BiasedChoice(0.1), BiasedChoice(0.1), BiasedChoice(0.1)) # A little bit of cheating never hurt anybody...
+#Self Concept Maintenance Theory, a little bit of cheating doesn't hurt anybody... does it?
+SCM <- CoopCor(10, 1000, BiasedChoice(0.1), BiasedChoice(0.1), BiasedChoice(0.1))
 ```
 
-Some examples using STRATEGY for the leader
+
+*** Smarter Leader ***
+# Comparing strategy methods
+
+As stated earlier, we have 2 different strategies that use a window of N previous round to decide
+#to check or not.
+* A forgiving leader that takes the actual payoff into account. As there is no pay off when a cheat has been checked by the leader, it counts as a fail and draws the average score down. "Common guys, this practice is illegal. I'll erase the record, just like if nothing happened. I trust you to do it properly next time."
+* A grudgy leader that takes into account the theoretical pay off, counting the values of cheats that have been checked to calculate the average score. "This is unacceptable! You won't get anything this time. I may give you another chance, but I remember your foolish claims!"
+
+How would we expect the game to unfold when those strategies are faced by different levels of cheating?
+
+# Simulations
 ```{r}
-ex1 <- CoopCor(1, 100, BiasedChoice(0.9), BiasedChoice(0.9), BiasedChoice(0.01))
-```
+# quick and dirty (but efficient) simulations
 
+#Here, we define a list that will host all our different simulations
+simulations_g <- list() #the grudgy biased leader / he'll keep track of your cheating and won't give you a chance if your claims are above his ideals
+simulations_f <- list() #the strict forgiving leader / he won't write down that you cheated, but once you cross the line, he'll notice
+simulations_g_tt <- list() #the grudgy statistician leader / he'll keep track of your cheating but also that your results depend on the size of his records
+simulations_f_tt <- list() #the forgiving statistician leader / he won't write down that you cheated, and will also keep in mind that your results depend on the size of his records
+
+#Because the leader doesn't care who cheted in the team, just that it happened, and because h
+#only takes into account the mean payoff to inform his judgement, players can have the same bias
+#to cheat.
+biases <- seq(0,1,0.1)
+
+#We want a 100 games with a 100 rounds
+games <- 100
+rounds <- 100
+
+#We create a loop that runs the game for each bias and each type of leader
+for(i in seq_along(biases)){
+  print(biases[i])
+  simulations_g[[i]] <- CoopCor(games, rounds, BiasedChoice(biases[i]), BiasedChoice(biases[i]), N_Th_Cumulative_Mean(25))
+  simulations_f[[i]] <- CoopCor(games, rounds, BiasedChoice(biases[i]), BiasedChoice(biases[i]), N_Cumulative_Mean(25))
+  simulations_g_tt[[i]] <- CoopCor(games, rounds, BiasedChoice(biases[i]), BiasedChoice(biases[i]), N_Th_Cumulative_Mean_ttest(25))
+  simulations_f_tt[[i]] <- CoopCor(games, rounds, BiasedChoice(biases[i]), BiasedChoice(biases[i]), N_Cumulative_Mean_ttest(25))
+}
+
+
+####### FROM HERE, SOME FORMATTING MAGIC USING MOSTLY TIDYVERSE
+names(simulations_f) <- biases
+names(simulations_g) <- biases
+names(simulations_f_tt) <- biases
+names(simulations_g_tt) <- biases
+
+simulations_g_df <- plyr::ldply(simulations_g, data.frame) %>%
+  mutate(bias = as.numeric(as.character(.id)),
+         heuristic = "grudgy")
+
+simulations_f_df <- plyr:: ldply(simulations_f, data.frame) %>%
+  mutate(bias = as.numeric(as.character(.id)),
+         heuristic = "forgiving")
+
+simulations_gtt_df <- plyr:: ldply(simulations_g_tt, data.frame) %>%
+  mutate(bias = as.numeric(as.character(.id)),
+         heuristic = "grudgy_ttest")
+
+simulations_ftt_df <- plyr:: ldply(simulations_f_tt, data.frame) %>%
+  mutate(bias = as.numeric(as.character(.id)),
+         heuristic = "forgiving_ttest")
+
+sim_comb <- rbind(simulations_g_df,simulations_f_df,simulations_gtt_df,simulations_ftt_df) %>%
+  group_by(heuristic, n_game, bias) %>%
+  mutate(turnID = row_number(),
+         cum_pay = cumsum(payoff),
+         lost_game = ifelse(sum(ingame) == rounds, 0, 1),
+         actual_pay = ifelse(lost_game == 0, payoff, 0))
+
+
+#write.csv(sim_comb, "data/sims/sim_plots/leader_heuristic/sim_comb.csv", row.names = FALSE)
+
+
+sim_comb_sum <- sim_comb %>%
+  group_by(heuristic, bias, turnID) %>%
+  summarise(mean_pay = mean(payoff),
+            mean_actual_pay = mean(actual_pay),
+            sum_checks = sum(check),
+            sum_cheats = sum(cheated),
+            sum_lost_game = sum(lost_game),
+            sum_unchecked_cheat = sum(ifelse(cheated == 1 & check == 0, 1,0)),
+            sum_checked_cheat = sum(ifelse(cheated == 1 & check == 1, 1,0)),
+            sum_useless_check = sum(ifelse(cheated == 0 & check == 1, 1,0))) %>%
+  group_by(heuristic, bias) %>%
+  mutate(mean_cum_pay = cumsum(mean_pay),
+         mean_cum_actual_pay = cumsum(mean_actual_pay))
+
+#write.csv(sim_comb_sum, "data/sims/sim_plots/leader_heuristic/sim_comb_sum.csv", row.names = FALSE)
+
+```
