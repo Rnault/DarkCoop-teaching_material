@@ -12,29 +12,24 @@ knitr::opts_chunk$set(echo = TRUE)
 library(parallel)
 library(tidyverse)
 ```
-## n games = 1 as more relevant
 
-## 1 side changing the team (the one(s) that cheated when lost) / one side changing the leader / one side everyone when bankrupt
+WHAT ARE THE EVOLUTIONNARY PRESSURES THAT INCENTIVIZE CHEATING?
 
-# choose a new guy from the 10% best
-# slight error rate (0.1 with max at 0 and 1)
-
-
-## keep track of the proportions of honesty in time
 
 FUNCTIONS
-# CoopCor simple
+# Here is a more optimized version of the game. Although it outputs the same format of results, it might be smart to use for extremely long runs
 ```{r}
 PayoffEq <- function(x,check,cheat){(x - check*x/2 - check*cheat*x/2)}
 
-CoopCor_Game <- function(tmax,BiasP1,BiasP2,BiasP3,lose.game.chance){
+#Don't think this one too hard, just know it's similar to the other one, but faster
+CoopCor_Game <- function(tmax,BiasP1,BiasP2,BiasP3,p_lose){
   rolls <- tibble(
     P1_roll = sample(c(1:6),replace = TRUE, size = tmax),
     P2_roll = sample(c(1:6),replace = TRUE, size = tmax),
     P1_bernoulli = rbernoulli(tmax,BiasP1),
     P2_bernoulli = rbernoulli(tmax,BiasP2),
     P3_bernoulli = rbernoulli(tmax,BiasP3),
-    Lose_bernoulli = rbernoulli(tmax,lose.game.chance)) %>% 
+    Lose_bernoulli = rbernoulli(tmax,p_lose)) %>% 
     mutate(P1_cheat = if_else(P1_roll != 6 & P1_bernoulli,1,0),
            P1_roll = ifelse(P1_cheat == 1, 6, P1_roll),
            P2_cheat = if_else(P2_roll != P1_roll & P2_bernoulli,1,0),
@@ -60,6 +55,11 @@ CoopCor_simple <- function(n_game, tmax, BiasP1, BiasP2, BiasP3, lose.game.chanc
 
 
 # Evolution
+To evolve, we have to define 3 things:
+-our environment -> Here, environment is the pool of 'companies'. Each company is a team of 3 that plays the game every timestep. After a run, they are ordered by their results.
+-our time steps
+-our updating strategy: in the following block
+Then wrap this all up in one function
 ```{r}
 #Generate N random set of 3 agents
 Companies <- function(N, peace = 0){
@@ -84,7 +84,7 @@ RunGen <- function(companies){
 #this function makes a run of the game + extra calculations needed for the updating
 Sep <- function(company){
   # Run <- CoopCor(1, 100, BiasedChoice(company[1]), BiasedChoice(company[2]), BiasedChoice(company[3]))
-  Run <- CoopCor_simple(n_game = 1, tmax = 100, company[1], company[2], company[3], lose.game.chance = 0.2)
+  Run <- CoopCor_simple(n_game = 1, tmax = 100, company[1], company[2], company[3], p_lose = 0.2)
 
   #get cumulative payoff of the run (if game lost = 0)
   # Run$cumpayoff <- ifelse(Run$ingame == 1, cumsum(Run$payoff), 0)
@@ -144,6 +144,12 @@ EvoLight <- function(N_companies, N_generations, firing_method, ...){
 
 #### UPDATE FUNCTIONS
 When the game is lost because of cheating, the company has to be rearranged. We can fire some (or all) members and hire some that are similar to the people working in the succesfull companies
+For that, we define 3 different ways to fire employees, thus 3 ways for the sytem to evolve.
+1.We can sack the leader. After all, he's responsible for his team. This is his lack of professionalism that led u here.
+2.We can investigate, find out who cheated, and fire that person. After all, his colleagues might not be aware of his misconduct.
+3.We sack everyone. We don't have time to lose, the team failed, the team is responsible
+
+When people get fired, they are being replaced by employees with similar profiles to the employees belonging to the 10% best companies.We introduce randomness by
 
 ```{r}
 #Only the leader get sacked
@@ -219,84 +225,24 @@ UpdateEveryone <- function(results, companies, N_companies){
 }
 ```
 
- 
-SIMULATIONS
-```{r}
-test <- EvoLight(100, 50, "leader", lose.game.percent = 0.03)
-
-everyone_0.2_t40 <- EvoLight(100, 250, "everyone", lose.game.percent = 0.02)
-
-everyone_0.02 %>% 
-  mutate(generation = row_number()) %>% 
-  gather(Player, Mean.Bias, meanP1:meanLeader) %>% 
-  mutate(Player = as.factor(str_remove(Player, "mean"))) %>% 
-  ggplot(aes(generation, Mean.Bias, color = Player)) +
-  geom_line() +
-  expand_limits(y = 0)
-
-everyone_0.02 %>% 
-  mutate(generation = row_number()) %>% 
-  gather(Player, Mean.Bias, meanP1:meanLeader) %>% 
-  mutate(Player = as.factor(str_remove(Player, "mean"))) %>% 
-  ggplot(aes(generation, AverageFitness, color = Player)) +
-  geom_line() +
-  expand_limits(y = 0)
 
 
-leader_0.03 <- EvoLight(100, 250, "leader", lose.game.percent = 0.03)
-
-leader_0.03 %>% 
-  mutate(generation = row_number()) %>% 
-  gather(Player, Mean.Bias, meanP1:meanLeader) %>% 
-  mutate(Player = as.factor(str_remove(Player, "mean"))) %>% 
-  ggplot(aes(generation, Mean.Bias, color = Player)) +
-  geom_line() +
-  expand_limits(y = 0)
-
-leader_0.03 %>% 
-  mutate(generation = row_number()) %>% 
-  gather(Player, Mean.Bias, meanP1:meanLeader) %>% 
-  mutate(Player = as.factor(str_remove(Player, "mean"))) %>% 
-  ggplot(aes(generation, AverageFitness, color = Player)) +
-  geom_line() +
-  expand_limits(y = 0)
-
-
-cheater_0.03 <- EvoLight(100, 250, "cheater", lose.game.percent = 0.03)
-
-cheater_0.03 %>% 
-  mutate(generation = row_number()) %>% 
-  gather(Player, Mean.Bias, meanP1:meanLeader) %>% 
-  mutate(Player = as.factor(str_remove(Player, "mean"))) %>% 
-  ggplot(aes(generation, Mean.Bias, color = Player)) +
-  geom_line() +
-  expand_limits(y = c(0,1))
-
-cheater_0.03 %>% 
-  mutate(generation = row_number()) %>% 
-  gather(Player, Mean.Bias, meanP1:meanLeader) %>% 
-  mutate(Player = as.factor(str_remove(Player, "mean"))) %>% 
-  ggplot(aes(generation, AverageFitness, color = Player)) +
-  geom_line() +
-  expand_limits(y = 0)
-```
-
-
+####################### II. RUNS ###############################
 
 ```{r}
 ## N=1000 AND GEN=250 
 #if everyone gets fired
-everyone <- EvoLight(100, 10000, "everyone")
+everyone <- EvoLight(100, 100, "everyone")
 
 #if only the cheater(s) gets fired
-cheater <- EvoLight(100, 1000, "cheater")
+cheater <- EvoLight(100, 100, "cheater")
 
 #if only the leqder gets fired
-leader <- EvoLight(100, 10000, "leader")
+leader <- EvoLight(100, 100, "leader")
 
 #Save
-write.csv(everyone, "data/sims/evo/update_everyone_5%_10000.csv", row.names = FALSE)
-write.csv(leader, "data/sims/evo/update_leader_5%_10000.csv", row.names = FALSE)
+#write.csv(everyone, "data/sims/evo/update_everyone_5%_10000.csv", row.names = FALSE)
+#write.csv(leader, "data/sims/evo/update_leader_5%_10000.csv", row.names = FALSE)
 ```
 
 
@@ -363,40 +309,5 @@ combined %>% ggplot(aes(generation, value, color = key)) +
   geom_line() +
   facet_wrap(~ src) +
   transition_reveal(generation)
-
-```
-
-
-
-OLD NON OPTIMISED FUNCTION TO RUN THE GAME
-```{r}
-#Run the game once for each company in companies df
-RunGen <- function(N_companies, companies, rounds = 100)
-{
-  results <- as.data.frame(matrix(NA,N_companies,2))
-  colnames(results) <- c("fitness","cheat")
-
-for (n in 1:N_companies)
-{
-Run <- CoopCor(1, rounds, BiasedChoice(companies$P1[n]), BiasedChoice(companies$P2[n]), BiasedChoice(companies$Leader[n]))
-#get cumulative payoff of the run (if game lost = 0)
-Run$cumpayoff <- ifelse(Run$ingame == 1, cumsum(Run$payoff), 0)
-#the fitness is how much they get when reaching the end
-results$fitness[n] <- Run$cumpayoff[rounds]
-#get the guy who cheated when lost (3 = both, 1 = P1, 2 = P2)
-cheater <- subset(Run, ingame == 0)
-if (dim(cheater)[1] != 0 ){
-if (cheater[1,3] == 1){
-  if (cheater[1,4] == 1) {
-    results$cheat[n] <- 3
-  }
-  else {results$cheat[n] <- 1}
-}
-else{results$cheat[n] <- 2}
-}
-else {results$cheat[n] <- 0}
-}
-return(results)
-}
 
 ```
