@@ -112,12 +112,21 @@ data_wide %>%
   ggplot(aes(reported_roll_p1, reported_roll_p2)) +
   geom_point(position = "jitter")
 
+data_wide %>% 
+  ggplot(aes(actual_roll_p1, reported_roll_p1)) +
+  geom_point(position = "jitter")
 
 
+data_wide %>% 
+  ggplot(aes(actual_roll_p2, reported_roll_p2)) +
+  geom_point(position = "jitter")
+
+
+# change over time
 data_wide %>%
   ggplot(aes(round_number, team_cheated)) +
   geom_jitter() +
-  geom_smooth()
+  geom_smooth(method = "lm")
 
 
 data_wide %>% 
@@ -141,5 +150,13 @@ data_wide %>%
   ggplot(aes(Player1_mi_int, p1_cheat)) +
   geom_jitter() +
   geom_smooth(method = "lm")
+
+
+
+```
+
+
+```{r}
+data_long$
 ```
 
