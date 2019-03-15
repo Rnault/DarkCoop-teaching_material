@@ -1,6 +1,8 @@
 ---
 title: "exploring_data"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -12,9 +14,9 @@ knitr::opts_knit$set(root.dir = getwd())
 # Libraries for datacleaning and exploration
 library(tidyverse)
 library(purrr)
-library(fs)
-library(lme4)
-library(here)
+# library(fs)
+# library(lme4)
+# library(here)
 
 theme_set(theme_light())
 ```
@@ -106,6 +108,38 @@ data_sum <- data_long %>%
 
 # time to have some fun!
 ```{r}
+data_wide %>% 
+  ggplot(aes(reported_roll_p1, reported_roll_p2)) +
+  geom_point(position = "jitter")
 
+
+
+data_wide %>%
+  ggplot(aes(round_number, team_cheated)) +
+  geom_jitter() +
+  geom_smooth()
+
+
+data_wide %>% 
+  ggplot(aes(reported_roll_p1, reported_roll_p2, color = as.factor(checked))) +
+  geom_point(position = "jitter", alpha = 0.5)
+
+
+# checking over time
+data_wide %>%
+  ggplot(aes(round_number, checked)) +
+  geom_jitter() +
+  geom_smooth(method = "lm")
+
+
+data_wide %>% 
+  ggplot(aes(Leader_mi_int, checked)) +
+  geom_jitter() +
+  geom_smooth(method = "lm")
+
+data_wide %>% 
+  ggplot(aes(Player1_mi_int, p1_cheat)) +
+  geom_jitter() +
+  geom_smooth(method = "lm")
 ```
 
