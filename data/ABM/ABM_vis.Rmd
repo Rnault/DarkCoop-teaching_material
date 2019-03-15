@@ -204,6 +204,20 @@ sim_comb_sum %>%
   geom_line(aes(group = bias)) +
   scale_color_gradient2(low = "green", mid = "yellow", high = "red", midpoint = 0.5) +
   facet_wrap(~heuristic)
+
+
+# Foregone income (What you are missing on by checking too much)
+sim_comb %>%
+  mutate(foregone_pay = ifelse(check == 1 & cheated == 0, th_payoff - actual_pay, 0)) %>%
+  group_by(bias, heuristic, n_game) %>%
+  mutate(foregone_pay_cum = cumsum(foregone_pay)) %>%
+  group_by(turnID, bias, heuristic) %>%
+  summarise(mean_foregone_pay_cum = mean(foregone_pay_cum)) %>%
+  ggplot(aes(x = turnID, y = mean_foregone_pay_cum, color = as.factor(bias))) +
+  geom_line() +
+  facet_wrap(~ heuristic) +
+  scale_color_manual(values = scales::seq_gradient_pal(low = "green", high = "red")(seq(0,1, length.out = 11))) +
+  labs(x = "Turn Number", y = "Foregone Payout (cumulative)", title = "Foregone pay by unnecessary checks")
 ```
 
 What is the state of the games at last round?
@@ -220,16 +234,14 @@ sim_comb_max %>% ggplot(aes(x = bias, y = mean_cum_actual_pay, fill = heuristic)
 ## At last round
 
 ## What we have when the game ends
-#gains for each cheating bias and heuristic, averaged over the 250 games
-sim_comb_max %>% ggplot(aes(x = bias, y = mean_cum_pay, color = heuristic)) +
-  geom_point() + geom_smooth(method = 'lm')
 #actual gains (accounting for failed games) for each cheating bias and heuristic, averaged over the 250 games
 sim_comb_max %>% ggplot(aes(x = bias, y = mean_cum_actual_pay, color = heuristic)) +
-  geom_point() + geom_smooth()
+  geom_point() + geom_smooth(method = "lm")
 #total lost games on 250 runs by bias and heuristics
 sim_comb_max %>% ggplot(aes(x = bias, y = sum_lost_game, color = heuristic)) +
   geom_point() + geom_smooth()
 ```
+
 
 Everything about the dynamics between checks and cheats:
 We have 2*2 possibilities
