@@ -23,4 +23,4 @@ This folder contains a python implementation of the "Rely or Verify game" to be 
 This folder contains the data we collected with the students when playing the oTree version of the game
 
 ### exploring
-This folder contains the scripts to work with the data from oTree one one side and from the simulation in the other.
+This folder contains the scripts to work with the data from oTree.
